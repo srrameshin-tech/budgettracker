@@ -25,21 +25,22 @@ font-family:Arial;
 body{
 background:#020c2b;
 color:white;
-padding:15px;
+padding:10px;
 }
 
 h1{
 text-align:center;
 margin-bottom:20px;
 color:#ffe600;
+font-size:32px;
 }
 
 .card,
 .form-box,
 .table-box{
 background:#16213e;
-padding:20px;
-border-radius:20px;
+padding:15px;
+border-radius:18px;
 margin-bottom:20px;
 }
 
@@ -69,7 +70,7 @@ cursor:pointer;
 
 .summary{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+grid-template-columns:1fr;
 gap:15px;
 margin-bottom:20px;
 }
@@ -89,13 +90,18 @@ color:black;
 
 .actions{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+grid-template-columns:1fr 1fr;
 gap:10px;
 margin-bottom:20px;
 }
 
+.table-box{
+overflow-x:auto;
+}
+
 table{
 width:100%;
+min-width:900px;
 border-collapse:collapse;
 }
 
@@ -110,10 +116,20 @@ padding:10px;
 text-align:center;
 background:#1e293b;
 border-bottom:1px solid #334155;
+white-space:nowrap;
 }
 
 .delete-btn{
 background:red;
+padding:8px;
+border:none;
+border-radius:8px;
+color:white;
+cursor:pointer;
+}
+
+.edit-btn{
+background:orange;
 padding:8px;
 border:none;
 border-radius:8px;
@@ -127,54 +143,19 @@ margin-top:20px;
 color:#22c55e;
 font-weight:bold;
 }
-.table-box{
-overflow-x:auto;
-}
 
-table{
-min-width:900px;
-}
+@media(min-width:768px){
 
-@media(max-width:768px){
-
-body{
-padding:8px;
-}
-
-h1{
-font-size:28px;
-}
-
-.card,
-.form-box,
-.table-box{
-padding:12px;
-border-radius:15px;
-}
-
-input,
-select,
-button{
-font-size:14px;
-padding:12px;
-}
-
-th,
-td{
-font-size:12px;
-padding:8px;
-white-space:nowrap;
+.summary{
+grid-template-columns:1fr 1fr 1fr;
 }
 
 .actions{
-grid-template-columns:1fr 1fr;
-}
-
-.summary{
-grid-template-columns:1fr;
+grid-template-columns:repeat(5,1fr);
 }
 
 }
+
 </style>
 
 </head>
@@ -218,8 +199,7 @@ grid-template-columns:1fr;
 
 </select>
 
-<select id="category"
-onchange="checkOtherCategory()">
+<select id="category" onchange="checkOtherCategory()">
 
 <option>Salary</option>
 <option>Business</option>
@@ -286,6 +266,7 @@ Monthly Reset
 <th>Category</th>
 <th>Description</th>
 <th>Amount</th>
+<th>Edit</th>
 <th>Delete</th>
 
 </tr>
@@ -317,6 +298,25 @@ SUPABASE_KEY
 );
 
 loadEntries();
+
+function checkOtherCategory(){
+
+let category =
+document.getElementById("category").value;
+
+if(category==="Other"){
+
+document.getElementById("customCategory")
+.style.display = "block";
+
+}else{
+
+document.getElementById("customCategory")
+.style.display = "none";
+
+}
+
+}
 
 async function loadEntries(){
 
@@ -368,15 +368,8 @@ table.innerHTML += `
 <td>₹ ${entry.amount}</td>
 
 <td>
-<td>
 
-<button
-style="background:orange;
-padding:8px;
-border:none;
-border-radius:8px;
-color:white;
-cursor:pointer;"
+<button class="edit-btn"
 onclick="editEntry(${entry.id},
 '${entry.username}',
 '${entry.date}',
@@ -390,6 +383,9 @@ Edit
 </button>
 
 </td>
+
+<td>
+
 <button class="delete-btn"
 onclick="deleteEntry(${entry.id})">
 
@@ -430,6 +426,13 @@ document.getElementById("type").value;
 let category =
 document.getElementById("category").value;
 
+if(category==="Other"){
+
+category =
+document.getElementById("customCategory").value;
+
+}
+
 let description =
 document.getElementById("description").value;
 
@@ -462,10 +465,12 @@ amount
 
 document.getElementById("description").value="";
 document.getElementById("amount").value="";
+document.getElementById("customCategory").value="";
 
 loadEntries();
 
 }
+
 async function editEntry(
 id,
 username,
@@ -502,6 +507,7 @@ await client
 loadEntries();
 
 }
+
 async function deleteEntry(id){
 
 await client

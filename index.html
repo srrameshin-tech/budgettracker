@@ -1,1 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Budget Tracker Pro</title>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body{
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    h1{
+      text-align:center;
+      color:#ffe600;
+      margin-bottom:20px;
+      font-size:40px;
+    }
+
+    .card{
+      background:#1e293b;
+      padding:20px;
+      border-radius:20px;
+      margin-bottom:20px;
+      box-shadow:0 0 15px rgba(0,0,0,0.3);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:15px;
+    }
+
+    input, select, button{
+      width:100%;
+      padding:14px;
+      border:none;
+      border-radius:12px;
+      font-size:16px;
+    }
+
+    input, select{
+      background:white;
+      color:black;
+    }
+
+    button{
+      background:#22c55e;
+      color:white;
+      cursor:pointer;
+      font-weight:bold;
+      transition:0.3s;
+    }
+
+    button:hover{
+      background:#16a34a;
+    }
+
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+      margin-top:20px;
+    }
+
+    .summary-box{
+      padding:20px;
+      border-radius:20px;
+      text-align:center;
+      font-size:22px;
+      font-weight:bold;
+    }
+
+    .income{
+      background:#16a34a;
+    }
+
+    .expense{
+      background:#dc2626;
+    }
+
+    .balance{
+      background:#eab308;
+      color:black;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:20px;
+    }
+
+    th{
+      background:#eab308;
+      color:black;
+      padding:15px;
+    }
+
+    td{
+      padding:12px;
+      text-align:center;
+      background:#1e293b;
+      border-bottom:1px solid #334155;
+    }
+
+    .action-btn{
+      padding:8px 14px;
+      margin:2px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      color:white;
+      font-size:14px;
+    }
+
+    .edit{
+      background:#f59e0b;
+    }
+
+    .delete{
+      background:#ef4444;
+    }
+
+    .top-buttons{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:10px;
+      margin-top:20px;
+    }
+
+    .password-box{
+      max-width:400px;
+      margin:80px auto;
+      background:#1e293b;
+      padding:30px;
+      border-radius:20px;
+    }
+
+    .view-link{
+      background:#2563eb;
+    }
+
+    .export{
+      background:#9333ea;
+    }
+
+    @media(max-width:768px){
+      h1{
+        font-size:28px;
+      }
+
+      table{
+        font-size:12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="loginPage" class="password-box">
+  <h1>🔐 Budget Tracker Lock</h1>
+  <br><br>
+
+  <input type="password" id="passwordInput" placeholder="Enter Password">
+
+  <br><br>
+
+  <button onclick="checkPassword()">Open Budget Tracker</button>
+</div>
+
+<div class="container" id="app" style="display:none;">
+
+  <h1>💰 COMPLETE BUDGET TRACKER</h1>
+
+  <div class="card">
+
+    <div class="grid">
+
+      <input type="date" id="date">
+
+      <select id="type">
+        <option value="Income">Income</option>
+        <option value="Expense">Expense</option>
+      </select>
+
+      <input type="text" id="description" placeholder="Description">
+
+      <input type="number" id="amount" placeholder="Amount">
+
+    </div>
+
+    <br>
+
+    <button onclick="addEntry()">➕ Add Entry</button>
+
+  </div>
+
+  <div class="summary">
+
+    <div class="summary-box income">
+      Monthly Income
+      <br><br>
+      ₹ <span id="incomeTotal">0</span>
+    </div>
+
+    <div class="summary-box expense">
+      Monthly Expense
+      <br><br>
+      ₹ <span id="expenseTotal">0</span>
+    </div>
+
+    <div class="summary-box balance">
+      Carry Forward Balance
+      <br><br>
+      ₹ <span id="balanceTotal">0</span>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div class="top-buttons">
+
+      <button class="export" onclick="exportPDF()">
+        📄 Export PDF
+      </button>
+
+      <button class="view-link" onclick="generateViewLink()">
+        🔗 Public View Link
+      </button>
+
+    </div>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="tableBody"></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<script>
+
+let entries = JSON.parse(localStorage.getItem("budgetEntries")) || [];
+
+const PASSWORD = "1234";
+
+function checkPassword(){
+
+  let pass = document.getElementById("passwordInput").value;
+
+  if(pass === PASSWORD){
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    renderTable();
+  }else{
+    alert("Wrong Password");
+  }
+
+}
+
+function addEntry(){
+
+  let date = document.getElementById("date").value;
+  let type = document.getElementById("type").value;
+  let description = document.getElementById("description").value;
+  let amount = document.getElementById("amount").value;
+
+  if(date === "" || description === "" || amount === ""){
+    alert("Fill all fields");
+    return;
+  }
+
+  let entry = {
+    id: Date.now(),
+    date,
+    type,
+    description,
+    amount:Number(amount)
+  };
+
+  entries.push(entry);
+
+  localStorage.setItem("budgetEntries", JSON.stringify(entries));
+
+  renderTable();
+
+  document.getElementById("description").value = "";
+  document.getElementById("amount").value = "";
+
+}
+
+function renderTable(){
+
+  let table = document.getElementById("tableBody");
+
+  table.innerHTML = "";
+
+  let income = 0;
+  let expense = 0;
+
+  entries.forEach(entry=>{
+
+    if(entry.type === "Income"){
+      income += entry.amount;
+    }else{
+      expense += entry.amount;
+    }
+
+    table.innerHTML += `
+
+      <tr>
+
+        <td>${entry.date}</td>
+        <td>${entry.type}</td>
+        <td>${entry.description}</td>
+        <td>₹ ${entry.amount}</td>
+
+        <td>
+
+          <button class="action-btn edit"
+            onclick="editEntry(${entry.id})">
+            Edit
+          </button>
+
+          <button class="action-btn delete"
+            onclick="deleteEntry(${entry.id})">
+            Delete
+          </button>
+
+        </td>
+
+      </tr>
+
+    `;
+
+  });
+
+  let balance = income - expense;
+
+  document.getElementById("incomeTotal").innerText = income;
+  document.getElementById("expenseTotal").innerText = expense;
+  document.getElementById("balanceTotal").innerText = balance;
+
+}
+
+function deleteEntry(id){
+
+  entries = entries.filter(entry => entry.id !== id);
+
+  localStorage.setItem("budgetEntries", JSON.stringify(entries));
+
+  renderTable();
+
+}
+
+function editEntry(id){
+
+  let entry = entries.find(e => e.id === id);
+
+  let newDesc = prompt("Edit Description", entry.description);
+  let newAmount = prompt("Edit Amount", entry.amount);
+
+  entry.description = newDesc;
+  entry.amount = Number(newAmount);
+
+  localStorage.setItem("budgetEntries", JSON.stringify(entries));
+
+  renderTable();
+
+}
+
+async function exportPDF(){
+
+  const { jsPDF } = window.jspdf;
+
+  let doc = new jsPDF();
+
+  doc.setFontSize(20);
+  doc.text("Monthly Budget Report", 20, 20);
+
+  let y = 40;
+
+  entries.forEach((entry,index)=>{
+
+    doc.text(
+      `${index+1}. ${entry.date} | ${entry.type} | ${entry.description} | ₹${entry.amount}`,
+      10,
+      y
+    );
+
+    y += 10;
+
+  });
+
+  doc.save("Budget_Report.pdf");
+
+}
+
+function generateViewLink(){
+
+  let data = encodeURIComponent(JSON.stringify(entries));
+
+  let link = window.location.origin +
+    window.location.pathname +
+    "?view=true&data=" + data;
+
+  navigator.clipboard.writeText(link);
+
+  alert("Public View Link Copied");
+
+}
+
+</script>
+
+</body>
+</html>

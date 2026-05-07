@@ -218,7 +218,8 @@ grid-template-columns:1fr;
 
 </select>
 
-<select id="category">
+<select id="category"
+onchange="checkOtherCategory()">
 
 <option>Salary</option>
 <option>Business</option>
@@ -230,6 +231,12 @@ grid-template-columns:1fr;
 <option>Other</option>
 
 </select>
+
+<input
+type="text"
+id="customCategory"
+placeholder="Enter Custom Category"
+style="display:none;">
 
 <input type="text" id="description" placeholder="Description">
 

@@ -1,8 +1,0 @@
-{
-  "name": "SR Budget Tracker",
-  "short_name": "SR Budget",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#020c2b",
-  "theme_color": "#22c55e"
-}

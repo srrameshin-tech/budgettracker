@@ -412,7 +412,42 @@ document.getElementById("amount").value="";
 loadEntries();
 
 }
+async function editEntry(
+id,
+username,
+date,
+type,
+category,
+description,
+amount
+){
 
+document.getElementById("username").value =
+username;
+
+document.getElementById("date").value =
+date;
+
+document.getElementById("type").value =
+type;
+
+document.getElementById("category").value =
+category;
+
+document.getElementById("description").value =
+description;
+
+document.getElementById("amount").value =
+amount;
+
+await client
+.from("entries")
+.delete()
+.eq("id",id);
+
+loadEntries();
+
+}
 async function deleteEntry(id){
 
 await client

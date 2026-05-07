@@ -314,7 +314,28 @@ table.innerHTML += `
 <td>₹ ${entry.amount}</td>
 
 <td>
+<td>
 
+<button
+style="background:orange;
+padding:8px;
+border:none;
+border-radius:8px;
+color:white;
+cursor:pointer;"
+onclick="editEntry(${entry.id},
+'${entry.username}',
+'${entry.date}',
+'${entry.type}',
+'${entry.category}',
+'${entry.description}',
+'${entry.amount}')">
+
+Edit
+
+</button>
+
+</td>
 <button class="delete-btn"
 onclick="deleteEntry(${entry.id})">
 

@@ -1,1 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Budget Tracker Pro</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#0f172a;
+color:white;
+padding:20px;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+color:#ffe600;
+margin-bottom:20px;
+font-size:40px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:20px;
+margin-bottom:20px;
+box-shadow:0 0 15px rgba(0,0,0,0.3);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:15px;
+}
+
+input,
+select,
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+font-size:16px;
+}
+
+input,
+select{
+background:white;
+color:black;
+}
+
+button{
+background:#22c55e;
+color:white;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+.summary{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.summary-box{
+padding:20px;
+border-radius:20px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
+}
+
+.income{
+background:#16a34a;
+}
+
+.expense{
+background:#dc2626;
+}
+
+.balance{
+background:#eab308;
+color:black;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th{
+background:#eab308;
+color:black;
+padding:15px;
+}
+
+td{
+padding:12px;
+text-align:center;
+background:#1e293b;
+border-bottom:1px solid #334155;
+}
+
+.action-btn{
+padding:8px 14px;
+margin:2px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+color:white;
+}
+
+.edit{
+background:#f59e0b;
+}
+
+.delete{
+background:#ef4444;
+}
+
+.top-buttons{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:10px;
+margin-top:20px;
+}
+
+.password-box{
+max-width:400px;
+margin:80px auto;
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+}
+
+@media(max-width:768px){
+
+h1{
+font-size:28px;
+}
+
+table{
+font-size:12px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginPage" class="password-box">
+
+<h1>🔐 Budget Lock</h1>
+
+<br><br>
+
+<input
+type="password"
+id="passwordInput"
+placeholder="Enter Admin Password"
+>
+
+<br><br>
+
+<button onclick="checkPassword()">
+Open Budget Tracker
+</button>
+
+</div>
+
+<!-- APP -->
+
+<div class="container" id="app" style="display:none;">
+
+<h1>💰 COMPLETE BUDGET TRACKER</h1>
+
+<!-- ENTRY -->
+
+<div class="card" id="entryCard">
+
+<div class="grid">
+
+<input type="date" id="date">
+
+<select id="type">
+
+<option value="Income">Income</option>
+<option value="Expense">Expense</option>
+
+</select>
+
+<input
+type="text"
+id="description"
+placeholder="Description"
+>
+
+<input
+type="number"
+id="amount"
+placeholder="Amount"
+>
+
+</div>
+
+<br>
+
+<button onclick="addEntry()">
+➕ Add Entry
+</button>
+
+<br><br>
+
+<button
+onclick="openAdminPanel()"
+style="background:#eab308;color:black;"
+>
+⚙️ Admin Settings
+</button>
+
+</div>
+
+<!-- SUMMARY -->
+
+<div class="summary">
+
+<div class="summary-box income">
+
+Monthly Income
+
+<br><br>
+
+₹ <span id="incomeTotal">0</span>
+
+</div>
+
+<div class="summary-box expense">
+
+Monthly Expense
+
+<br><br>
+
+₹ <span id="expenseTotal">0</span>
+
+</div>
+
+<div class="summary-box balance">
+
+Carry Forward Balance
+
+<br><br>
+
+₹ <span id="balanceTotal">0</span>
+
+</div>
+
+</div>
+
+<!-- TABLE -->
+
+<div class="card">
+
+<div class="top-buttons">
+
+<button
+style="background:#9333ea;"
+onclick="exportPDF()"
+>
+📄 Export PDF
+</button>
+
+<button
+style="background:#25D366;"
+onclick="shareWhatsApp()"
+>
+📲 Share To WhatsApp
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Type</th>
+<th>Description</th>
+<th>Amount</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ADMIN MODAL -->
+
+<div id="adminModal"
+style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+justify-content:center;
+align-items:center;
+z-index:999;
+">
+
+<div style="
+background:#1e293b;
+padding:25px;
+border-radius:20px;
+width:90%;
+max-width:450px;
+">
+
+<h2 style="color:#ffe600;text-align:center;">
+⚙️ Admin Settings
+</h2>
+
+<br>
+
+<label>Admin Password</label>
+
+<input
+type="password"
+id="newAdminPassword"
+placeholder="New Admin Password"
+>
+
+<br><br>
+
+<label>Public View Password</label>
+
+<input
+type="password"
+id="publicPassword"
+placeholder="Public View Password"
+>
+
+<br><br>
+
+<button onclick="saveAdminSettings()">
+Save Settings
+</button>
+
+<br><br>
+
+<button
+onclick="closeAdminPanel()"
+style="background:#ef4444;"
+>
+Close
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+// PASSWORDS
+
+let adminPassword =
+localStorage.getItem("adminPassword")
+|| "1234";
+
+let publicViewPassword =
+localStorage.getItem("publicViewPassword")
+|| "0000";
+
+// STORAGE
+
+let entries =
+JSON.parse(localStorage.getItem("budgetEntries"))
+|| [];
+
+// LOGIN
+
+function checkPassword(){
+
+let pass =
+document.getElementById("passwordInput").value;
+
+if(pass === adminPassword){
+
+document.getElementById("loginPage")
+.style.display = "none";
+
+document.getElementById("app")
+.style.display = "block";
+
+renderTable();
+
+}else{
+
+alert("Wrong Password");
+
+}
+
+}
+
+// ADMIN PANEL
+
+function openAdminPanel(){
+
+let pass =
+prompt("Enter Current Admin Password");
+
+if(pass === adminPassword){
+
+document.getElementById("adminModal")
+.style.display = "flex";
+
+document.getElementById("newAdminPassword")
+.value = adminPassword;
+
+document.getElementById("publicPassword")
+.value = publicViewPassword;
+
+}else{
+
+alert("Wrong Password");
+
+}
+
+}
+
+function closeAdminPanel(){
+
+document.getElementById("adminModal")
+.style.display = "none";
+
+}
+
+function saveAdminSettings(){
+
+let newAdmin =
+document.getElementById("newAdminPassword").value;
+
+let newPublic =
+document.getElementById("publicPassword").value;
+
+localStorage.setItem(
+"adminPassword",
+newAdmin
+);
+
+localStorage.setItem(
+"publicViewPassword",
+newPublic
+);
+
+adminPassword = newAdmin;
+
+publicViewPassword = newPublic;
+
+alert("Settings Saved");
+
+closeAdminPanel();
+
+}
+
+// ADD ENTRY
+
+function addEntry(){
+
+let date =
+document.getElementById("date").value;
+
+let type =
+document.getElementById("type").value;
+
+let description =
+document.getElementById("description").value;
+
+let amount =
+document.getElementById("amount").value;
+
+if(
+date === "" ||
+description === "" ||
+amount === ""
+){
+
+alert("Fill all fields");
+
+return;
+
+}
+
+let entry = {
+
+id:Date.now(),
+date,
+type,
+description,
+amount:Number(amount)
+
+};
+
+entries.push(entry);
+
+localStorage.setItem(
+"budgetEntries",
+JSON.stringify(entries)
+);
+
+renderTable();
+
+document.getElementById("description").value = "";
+document.getElementById("amount").value = "";
+
+}
+
+// RENDER TABLE
+
+function renderTable(){
+
+let table =
+document.getElementById("tableBody");
+
+table.innerHTML = "";
+
+let income = 0;
+let expense = 0;
+
+entries.forEach(entry => {
+
+if(entry.type === "Income"){
+
+income += entry.amount;
+
+}else{
+
+expense += entry.amount;
+
+}
+
+table.innerHTML += `
+
+<tr>
+
+<td>${entry.date}</td>
+
+<td>${entry.type}</td>
+
+<td>${entry.description}</td>
+
+<td>₹ ${entry.amount}</td>
+
+<td>
+
+<button
+class="action-btn edit"
+onclick="editEntry(${entry.id})"
+>
+Edit
+</button>
+
+<button
+class="action-btn delete"
+onclick="deleteEntry(${entry.id})"
+>
+Delete
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+let balance = income - expense;
+
+document.getElementById("incomeTotal")
+.innerText = income;
+
+document.getElementById("expenseTotal")
+.innerText = expense;
+
+document.getElementById("balanceTotal")
+.innerText = balance;
+
+}
+
+// DELETE
+
+function deleteEntry(id){
+
+entries =
+entries.filter(entry => entry.id !== id);
+
+localStorage.setItem(
+"budgetEntries",
+JSON.stringify(entries)
+);
+
+renderTable();
+
+}
+
+// EDIT
+
+function editEntry(id){
+
+let entry =
+entries.find(e => e.id === id);
+
+let newDesc =
+prompt("Edit Description", entry.description);
+
+let newAmount =
+prompt("Edit Amount", entry.amount);
+
+if(newDesc !== null){
+
+entry.description = newDesc;
+
+}
+
+if(newAmount !== null){
+
+entry.amount = Number(newAmount);
+
+}
+
+localStorage.setItem(
+"budgetEntries",
+JSON.stringify(entries)
+);
+
+renderTable();
+
+}
+
+// PDF EXPORT
+
+async function exportPDF(){
+
+const { jsPDF } = window.jspdf;
+
+let doc = new jsPDF();
+
+doc.setFontSize(20);
+
+doc.text("Budget Report", 14, 20);
+
+let rows = [];
+
+entries.forEach(entry => {
+
+rows.push([
+entry.date,
+entry.type,
+entry.description,
+"₹ " + entry.amount
+]);
+
+});
+
+doc.autoTable({
+
+head:[
+['Date','Type','Description','Amount']
+],
+
+body:rows,
+
+startY:30
+
+});
+
+let income = entries
+.filter(e => e.type === "Income")
+.reduce((a,b)=>a+b.amount,0);
+
+let expense = entries
+.filter(e => e.type === "Expense")
+.reduce((a,b)=>a+b.amount,0);
+
+let balance = income - expense;
+
+doc.text(
+"Total Income : ₹ " + income,
+14,
+doc.lastAutoTable.finalY + 15
+);
+
+doc.text(
+"Total Expense : ₹ " + expense,
+14,
+doc.lastAutoTable.finalY + 25
+);
+
+doc.text(
+"Carry Forward Balance : ₹ " + balance,
+14,
+doc.lastAutoTable.finalY + 35
+);
+
+doc.save("Budget_Report.pdf");
+
+}
+
+// WHATSAPP SHARE
+
+function shareWhatsApp(){
+
+if(entries.length === 0){
+
+alert("No Entries Found");
+
+return;
+
+}
+
+// CURRENT DATE
+
+let today = new Date();
+
+// PREVIOUS MONTH
+
+today.setMonth(today.getMonth() - 1);
+
+// MONTH NAME
+
+let monthName =
+today.toLocaleString(
+'default',
+{
+month:'long'
+}
+);
+
+// YEAR
+
+let year =
+today.getFullYear();
+
+// MESSAGE
+
+let message =
+`📊 ${monthName} ${year} Budget Report
+
+💰 ${monthName} ${year} Income : ₹ ${document.getElementById("incomeTotal").innerText}
+
+💸 ${monthName} ${year} Expense : ₹ ${document.getElementById("expenseTotal").innerText}
+
+🏦 ${monthName} ${year} Balance : ₹ ${document.getElementById("balanceTotal").innerText}`;
+
+// WHATSAPP URL
+
+let whatsappURL =
+"https://wa.me/?text=" +
+encodeURIComponent(message);
+
+// OPEN WHATSAPP
+
+window.open(
+whatsappURL,
+"_blank"
+);
+
+}
+
+</script>
+
+</body>
+</html>

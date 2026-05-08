@@ -416,6 +416,11 @@ table.innerHTML += `
 <td>${entry.category}</td>
 <td>${entry.description}</td>
 <td>₹ ${entry.amount}</td>
+${currentRole === "admin"
+? `<td><button class="edit-btn"
+onclick="editEntry(${entry.id})">Edit</button></td>`
+: ""
+}
 <td>
 <button class="delete-btn"
 onclick="deleteEntry(${entry.id})">

@@ -410,35 +410,26 @@ yearlyExpense += Number(entry.amount);
 
 tableBody.innerHTML += `
 <tr>
-
 <td>${entry.username}</td>
-
 <td>${entry.date}</td>
-
 <td>${entry.type}</td>
-
 <td>${entry.category}</td>
-
 <td>${entry.description}</td>
-
 <td>₹ ${entry.amount}</td>
 
-${currentRole === "admin"
-? `<td>
-<button class="edit-btn"
-onclick="editEntry(${entry.id})">
+${currentRole === "admin" ? `
+<td>
+<button class="edit-btn" onclick="editEntry(${entry.id})">
 Edit
 </button>
 </td>
 
 <td>
-<button class="delete-btn"
-onclick="deleteEntry(${entry.id})">
+<button class="delete-btn" onclick="deleteEntry(${entry.id})">
 Delete
 </button>
-</td>`
-: ""
-}
+</td>
+` : ""}
 
 </tr>
 `;

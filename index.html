@@ -417,43 +417,9 @@ tableBody.innerHTML += `
 <td>${entry.description}</td>
 <td>₹ ${entry.amount}</td>
 
-${currentRole === "admin" ? `
-<td>
-<button class="edit-btn" onclick="editEntry(${entry.id})">
-Edit
-</button>
-</td>
-
-<td>
-<button class="delete-btn" onclick="deleteEntry(${entry.id})">
-Delete
-</button>
-</td>
-` : ""}
 
 </tr>
 `;
-onclick="deleteEntry(${entry.id})">
-Delete
-</button>
-</td>`
-: ""
-}
-</tr>
-`;
-${currentRole === "admin"
-? `<td>
-<button class="delete-btn"
-onclick="deleteEntry(${entry.id})">
-Delete
-</button>
-</td>`
-: ""
-}
-
-</tr>
-`;
-});
 
 document.getElementById("income")
 .innerText = income;

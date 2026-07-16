@@ -536,8 +536,14 @@ async function login(){
   const ap = dbPasswords.admin || 'admin123';
   const pp = dbPasswords.public || 'public123';
 
-  if(u==='admin'&&p===ap){role='admin';}
-  else if(u==='public'&&p===pp){role='public';}
+  if(u==='admin' && await verifyPassword(p, ap)){
+    role='admin';
+    if(!isHashFormat(ap)){ dbPasswords.admin = await sha256Hex(p); persistPasswords().catch(()=>{}); }
+  }
+  else if(u==='public' && await verifyPassword(p, pp)){
+    role='public';
+    if(!isHashFormat(pp)){ dbPasswords.public = await sha256Hex(p); persistPasswords().catch(()=>{}); }
+  }
   else{showToast('❌ Invalid Login',true);return;}
   document.getElementById('loginPage').style.display='none';
   document.getElementById('mainApp').style.display='block';
@@ -1068,6 +1074,29 @@ async function monthlyReset(){
 // PASSWORD — SUPABASE BASED
 // ══════════════════════════════════════
 let dbPasswords = {admin:'admin123', public:'public123'};
+// Password hashing (SHA-256) — auto-migrates legacy plaintext passwords on next successful login
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function isHashFormat(str){ return typeof str==='string' && /^[a-f0-9]{64}$/i.test(str); }
+async function verifyPassword(entered, stored){
+  if(!stored) return false;
+  if(isHashFormat(stored)) return (await sha256Hex(entered))===stored;
+  return entered===stored;
+}
+async function persistPasswords(){
+  await db.from('entries').delete().eq('category','__settings__').eq('type','__passwords__');
+  await db.from('entries').insert([{
+    username:dbPasswords.admin,
+    description:dbPasswords.public,
+    category:'__settings__',
+    type:'__passwords__',
+    date:'2000-01-01',
+    amount:0
+  }]);
+}
 
 async function loadPasswords(){
   try{
@@ -1086,20 +1115,10 @@ async function savePasswords(){
   const a=document.getElementById('newAdminPw').value.trim();
   const p=document.getElementById('newPublicPw').value.trim();
   if(!a&&!p){showToast('❌ Password தேவை!',true);return;}
-  if(a) dbPasswords.admin=a;
-  if(p) dbPasswords.public=p;
+  if(a) dbPasswords.admin=await sha256Hex(a);
+  if(p) dbPasswords.public=await sha256Hex(p);
   try{
-    // Delete old settings entry
-    await db.from('entries').delete().eq('category','__settings__').eq('type','__passwords__');
-    // Insert new
-    await db.from('entries').insert([{
-      username:dbPasswords.admin,
-      description:dbPasswords.public,
-      category:'__settings__',
-      type:'__passwords__',
-      date:'2000-01-01',
-      amount:0
-    }]);
+    await persistPasswords();
     showToast('🔑 Passwords saved — all devices updated!');
   }catch(e){showToast('❌ Save failed!',true);}
   document.getElementById('newAdminPw').value='';
